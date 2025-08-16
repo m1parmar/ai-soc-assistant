@@ -31,7 +31,7 @@ def ask_llm(prompt: str) -> str:
     response = client.chat_completion(
         model="mistralai/Mistral-7B-Instruct-v0.2",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=300,
+        max_tokens=800,
     )
     return response.choices[0].message["content"].strip()
 
