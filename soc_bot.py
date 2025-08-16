@@ -1,68 +1,56 @@
-import os
 import requests
-from dotenv import load_dotenv
-from langchain.agents import tool, AgentExecutor, create_react_agent
-from langchain import hub
-from langchain_community.document_loaders import DirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain.tools.retriever import create_retriever_tool
+from dotenv import load_dotenv, dotenv_values
+from huggingface_hub import InferenceClient
 
-# --- IMPORTS CHANGED ---
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
-# 1. Load Environment Variables
+# 1. Load API Keys
 load_dotenv()
-VT_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
+config = dotenv_values(".env")
+VT_API_KEY = config.get("VIRUSTOTAL_API_KEY")
+HF_API_KEY = config.get("HUGGINGFACE_API_KEY")
 
-# 2. Create the Knowledge Base Retriever Tool
-loader = DirectoryLoader("./knowledge_base/", glob="**/*.md")
-documents = loader.load()
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-texts = text_splitter.split_documents(documents)
+# 2. Hugging Face Client
+client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_API_KEY)
 
-# --- EMBEDDINGS CHANGED ---
-embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
-vectorstore = Chroma.from_documents(texts, embeddings)
-retriever = vectorstore.as_retriever()
-
-knowledge_base_tool = create_retriever_tool(
-    retriever,
-    "knowledge_base_search",
-    "Searches and returns information from the internal knowledge base, including incident response playbooks and SOPs."
-)
-
-# 3. Create a Tool for IP Lookup
-@tool
+# 3. VirusTotal Lookup
 def get_ip_reputation(ip: str) -> str:
-    """Looks up an IP address in VirusTotal and returns a summary of its reputation."""
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip}"
     headers = {"x-apikey": VT_API_KEY}
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        data = response.json()
-        stats = data['data']['attributes']['last_analysis_stats']
-        return f"VirusTotal analysis for {ip}: Malicious: {stats['malicious']}, Harmless: {stats['harmless']}, Suspicious: {stats['suspicious']}."
-    except requests.exceptions.RequestException as e:
+        stats = response.json()["data"]["attributes"]["last_analysis_stats"]
+        return (
+            f"IP {ip} reputation — Malicious: {stats['malicious']}, "
+            f"Harmless: {stats['harmless']}, Suspicious: {stats['suspicious']}."
+        )
+    except Exception as e:
         return f"Error looking up IP: {e}"
 
-# 4. Initialize the Agent
-tools = [knowledge_base_tool, get_ip_reputation]
+# 4. Hugging Face Explanation
+def ask_llm(prompt: str) -> str:
+    response = client.chat_completion(
+        model="mistralai/Mistral-7B-Instruct-v0.2",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=300,
+    )
+    return response.choices[0].message["content"].strip()
 
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0)
+# 5. Main Logic
+def soc_assistant(query: str) -> str:
+    # Case 1: Query looks like an IP
+    if query.replace(".", "").isdigit():
+        vt_summary = get_ip_reputation(query)
+        return ask_llm(f"Explain this VirusTotal result in SOC analyst terms:\n{vt_summary}")
 
-prompt = hub.pull("hwchase17/react")
+    # Case 2: General threat actor / malware / CVE query
+    return ask_llm(f"SOC Analyst: Provide insight about {query}")
 
-agent = create_react_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-
-# 5. Run the Chat Loop
-print("SOC Assistant (Gemini Edition) is ready. Type 'exit' to quit.")
+# 6. Chat Loop
+print("SOC Assistant (API + LLM Edition) ready. Type 'exit' to quit.")
 while True:
     user_input = input("You: ")
-    if user_input.lower() == 'exit':
+    if user_input.lower() == "exit":
         break
-    response = agent_executor.invoke({"input": user_input})
-    print(f"Assistant: {response['output']}")
+    print("Analyzing...")
+    result = soc_assistant(user_input)
+    print(f"\nAssistant: {result}\n")
