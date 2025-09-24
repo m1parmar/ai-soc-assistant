@@ -10,7 +10,7 @@ function ChatBot({ getToken, user, logout, theme, toggleTheme }) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
+  const BACKEND_URL = "/api";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

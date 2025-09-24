@@ -1,0 +1,23 @@
+{
+  "builds": [
+    {
+      "src": "backend/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/node",
+      "config": { "installCommand": "npm install" }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/backend/app.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
+    }
+  ]
+}
