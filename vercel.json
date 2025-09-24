@@ -6,18 +6,16 @@
     },
     {
       "src": "frontend/package.json",
-      "use": "@vercel/node",
-      "config": { "installCommand": "npm install" }
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
     }
   ],
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/backend/app.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
     }
   ]
 }
