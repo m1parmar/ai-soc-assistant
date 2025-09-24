@@ -1,10 +1,12 @@
 # app.py
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import requests
 from dotenv import load_dotenv, dotenv_values
 from huggingface_hub import InferenceClient
 import jwt
+import asyncio
 
 # 1. Load API keys
 load_dotenv()
@@ -20,10 +22,10 @@ client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_AP
 # 3. FastAPI app
 app = FastAPI()
 
-# 4. CORS middleware (allow React frontend)
+# 4. CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # frontend URL
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,11 +37,8 @@ def verify_jwt(request: Request):
     if not token:
         raise HTTPException(status_code=401, detail="Missing x-token header")
     try:
-        header = jwt.get_unverified_header(token)
         jwks_url = f"https://{AUTH0_DOMAIN}/.well-known/jwks.json"
-        jwks = requests.get(jwks_url).json()
-        # Normally you'd verify signature using jwks and your audience
-        # For simplicity, just decode without verification
+        requests.get(jwks_url).json()
         payload = jwt.decode(token, options={"verify_signature": False}, audience=API_AUDIENCE)
         return payload
     except Exception as e:
@@ -47,6 +46,7 @@ def verify_jwt(request: Request):
 
 # 6. VirusTotal lookup
 def get_ip_reputation(ip: str) -> str:
+    # ... (This function remains unchanged)
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip}"
     headers = {"x-apikey": VT_API_KEY}
     try:
@@ -60,57 +60,55 @@ def get_ip_reputation(ip: str) -> str:
     except Exception as e:
         return f"Error looking up IP: {e}"
 
-# 7. Hugging Face explanation
-def ask_llm(prompt: str) -> str:
-    response = client.chat_completion(
-        model="mistralai/Mistral-7B-Instruct-v0.2",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=800,
-    )
-    return response.choices[0].message["content"].strip()
+# 7. Hugging Face stream generator
+async def ask_llm_stream(prompt: str):
+    try:
+        for token in client.chat_completion(
+            model="mistralai/Mistral-7B-Instruct-v0.2",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            stream=True, # Enable streaming
+        ):
+            content = token.choices[0].delta.get("content")
+            if content:
+                yield content
+                await asyncio.sleep(0.01) # Small delay for smoother streaming
+    except Exception as e:
+        print(f"LLM Error: {e}")
+        yield "Sorry, there was an error with the AI model."
 
-# 8. SOC assistant logic (UPDATED FOR MARKDOWN)
-def soc_assistant(query: str) -> str:
-    # Sanitize the query for checking
+
+# 8. Main logic for streaming endpoint
+def soc_assistant_stream_logic(query: str):
     clean_query = query.strip().lower()
-
-    # Define common greetings
     greetings = ["hi", "hello", "hey", "yo", "greetings"]
 
-    # 1. Check for greetings first
     if clean_query in greetings:
-        return "Hello! How can I help you with a security query today? You can ask me about an IP address, CVE, or malware family."
+        # For simple greetings, we don't need to stream. Return a generator that yields the full string.
+        async def greeting_generator():
+            yield "Hello! How can I help you with a security query today?"
+        return greeting_generator()
 
-    # 2. Check if it's an IP address
     if query.replace(".", "").isdigit():
         vt_summary = get_ip_reputation(query)
-        # New prompt asking for Markdown formatting
         prompt = f"""
-        As a SOC Analyst, interpret the following VirusTotal result.
-        Your response must be well-organized and use Markdown formatting.
-        Include a title, key findings in a bulleted list, and a concluding summary.
-
+        As a SOC Analyst, interpret the following VirusTotal result. Your response must be well-organized and use Markdown formatting.
         VirusTotal Result: "{vt_summary}"
         """
-        return ask_llm(prompt)
+        return ask_llm_stream(prompt)
     
-    # 3. If it's not a greeting or IP, send to the LLM for analysis
-    # New prompt asking for Markdown formatting
     prompt = f"""
-    As a helpful SOC Analyst assistant, provide a concise insight about the following topic.
-    Use Markdown formatting to structure your response with a clear title, bullet points for key details, and bold text for emphasis.
-    
+    As a helpful SOC Analyst assistant, provide a concise insight about the topic. Use Markdown formatting.
     Topic: "{query}"
     """
-    return ask_llm(prompt)
+    return ask_llm_stream(prompt)
 
-# 9. Routes
-@app.post("/analyze")
-async def analyze(request: Request, payload: dict = Depends(verify_jwt)):
+# 9. API Routes
+@app.post("/stream")
+async def stream(request: Request, payload: dict = Depends(verify_jwt)):
     body = await request.json()
     query = body.get("query", "")
-    result = soc_assistant(query)
-    return {"result": result}
+    return StreamingResponse(soc_assistant_stream_logic(query), media_type="text/plain")
 
 @app.get("/")
 def root():

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import ChatBot from "./ChatBot";
-import "./App.css"; // Import the new App CSS
+import "./App.css";
 
 function App() {
   const { 
@@ -12,6 +12,17 @@ function App() {
     user, 
     isLoading 
   } = useAuth0();
+  
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    // This line sets the data-theme attribute on the <html> tag
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -27,7 +38,9 @@ function App() {
         <ChatBot 
           getToken={getAccessTokenSilently} 
           user={user} 
-          logout={logout} 
+          logout={logout}
+          theme={theme}
+          toggleTheme={toggleTheme}
         />
       )}
     </div>

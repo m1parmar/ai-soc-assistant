@@ -1,20 +1,42 @@
-/* App.css */
-/* Basic reset for a full-screen layout */
+:root {
+  --background-primary: #ffffff;
+  --background-secondary: #f0f4f9;
+  --text-primary: #1e1e1e;
+  --text-secondary: #5f6368;
+  --border-color: #e0e0e0;
+  --accent-color: #1a73e8;
+  --accent-color-hover: #1765cc;
+  --user-bubble-background: #d1e7ff;
+  --bot-bubble-background: #f0f4f9;
+}
+
+[data-theme='dark'] {
+  --background-primary: #131314;
+  --background-secondary: #1e1f20;
+  --text-primary: #e8eaed;
+  --text-secondary: #969ba1;
+  --border-color: #3c4043;
+  --accent-color: #8ab4f8;
+  --accent-color-hover: #a5c6f9;
+  --user-bubble-background: #283545;
+  --bot-bubble-background: #3c4043;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
   font-family: Arial, sans-serif;
-  background-color: #f0f4f9; /* A light, neutral background */
+  background-color: var(--background-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Main application container */
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full viewport height */
-  width: 100%;
+  height: 100vh;
 }
 
 .login-container {
@@ -22,14 +44,4 @@ html, body, #root {
   justify-content: center;
   align-items: center;
   height: 100%;
-}
-
-.login-container button {
-  padding: 12px 24px;
-  font-size: 18px;
-  cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  background-color: #007bff;
-  color: white;
 }
