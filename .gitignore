@@ -1,9 +1,15 @@
-# Ignore API keys and secrets
+# Dependencies
+/node_modules
+/frontend/node_modules
+/backend/venv
+/backend/__pycache__
+
+# Build outputs
+/frontend/build
+
+# Environment variables
 .env
+.env.*
 
-# Ignore Python virtual environment
-venv/
-
-# Ignore Python cache files
-__pycache__/
-*.pyc
+# IDE config
+.vscode/
