@@ -10,7 +10,8 @@ function ChatBot({ getToken, user, logout, theme, toggleTheme }) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const BACKEND_URL = "/api";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,6 +41,7 @@ function ChatBot({ getToken, user, logout, theme, toggleTheme }) {
         headers: { "Content-Type": "application/json", "x-token": token },
         body: JSON.stringify({ query: currentInput })
       });
+
 
       if (!response.body) throw new Error("Response body is null");
 
