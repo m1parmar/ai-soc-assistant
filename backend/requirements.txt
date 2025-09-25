@@ -3,5 +3,5 @@ uvicorn
 requests
 python-dotenv
 huggingface_hub
-PyJWT
+PyJWT>=2.0.0
 asyncio
