@@ -104,11 +104,12 @@ def soc_assistant_stream_logic(query: str):
     return ask_llm_stream(prompt)
 
 # 9. API Routes
-@app.post("/stream")
+@app.post("/api/stream")
 async def stream(request: Request, payload: dict = Depends(verify_jwt)):
     body = await request.json()
     query = body.get("query", "")
     return StreamingResponse(soc_assistant_stream_logic(query), media_type="text/plain")
+
 
 @app.get("/")
 def root():
