@@ -1,4 +1,5 @@
 # app.py
+import os
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -23,9 +24,12 @@ client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_AP
 app = FastAPI()
 
 # 4. CORS middleware
+# This will allow requests from your local machine and your deployed Vercel frontend
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[frontend_url, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
