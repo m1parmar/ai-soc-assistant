@@ -117,15 +117,51 @@ def soc_assistant_stream_logic(query: str):
     if query.replace(".", "").isdigit():
         vt_summary = get_ip_reputation(query)
         prompt = f"""
-        As a SOC Analyst, interpret the following VirusTotal result. Your response must be well-organized and use Markdown formatting.
-        VirusTotal Result: "{vt_summary}"
-        """
+    You are acting as a SOC Analyst. Investigate and interpret the following IP address: **{query}**.  
+
+    Provide your analysis in a structured report format with the following sections:  
+
+    ## 1. Basic Information  
+    - IP Address: {query}  
+    - Type: (Public / Private / Reserved / Loopback)  
+    - Geolocation (Country, City, ISP, ASN, Organization)  
+    - Associated domains (if available)  
+
+    ## 2. Threat Intelligence Sources  
+    - VirusTotal Summary: {vt_summary}  
+    - Check AbuseIPDB or similar databases for abuse reports.  
+    - Mention whether the IP has been seen in:  
+    - Spam campaigns  
+    - Botnet activity  
+    - C2 infrastructure  
+    - Scanning activity  
+
+    ## 3. General Security Context  
+    - Is the IP in a known hosting provider, cloud service (AWS, Azure, GCP), or residential ISP?  
+    - Could this be a proxy / VPN / TOR exit node?  
+    - Any indicators it is a false positive (e.g., shared hosting)?  
+
+    ## 4. Potential Impact & Risk  
+    - How might this IP interact with an enterprise network? (e.g., inbound scanning, phishing delivery, C2 callbacks)  
+    - Risk classification: (Low / Medium / High)  
+    - Confidence level: (Low / Medium / High)  
+
+    ## 5. Recommended Actions  
+    - Block/allow recommendations (firewall / IDS / EDR).  
+    - Monitor for further activity (alerts, logs).  
+    - Suggest enrichment steps (reverse DNS, WHOIS lookup, passive DNS).  
+    """
         return ask_llm_stream(prompt)
+
+    # fallback if not an IP
     prompt = f"""
-    As a helpful SOC Analyst assistant, provide a concise insight about the topic. Use Markdown formatting.
-    Topic: "{query}"
+    As a helpful SOC Analyst assistant, provide a concise insight about the topic.  
+    Use Markdown formatting.  
+
+    **Topic:** {query}
     """
     return ask_llm_stream(prompt)
+
 
 # 9. API Routes (Unchanged)
 @app.post("/stream")
