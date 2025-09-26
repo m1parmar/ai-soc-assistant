@@ -1,4 +1,5 @@
 Cybrarian 🛡️
+
 Your AI-Powered SOC Assistant
 Cybrarian is a full-stack web application designed to act as an intelligent assistant for Security Operations Center (SOC) analysts. It leverages a large language model and integrates with security APIs to provide instant threat intelligence analysis in a modern, user-friendly chat interface.
 
