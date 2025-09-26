@@ -6,6 +6,7 @@ Cybrarian is a full-stack web application designed to act as an intelligent assi
 Live Demo Link
 
 Features
+
 🤖 AI-Powered Analysis: Get clear, human-readable interpretations of security data from a powerful language model (Mistral-7B).
 
 🌐 Real-time IP Reputation: Instantly check the reputation of any IP address using the VirusTotal API.
@@ -19,8 +20,8 @@ Features
 🚀 Full-Stack Deployment: Deployed with a modern JAMstack architecture, featuring a React frontend on Vercel and a Python backend on Render.
 
 Tech Stack
-Frontend
-Framework: React
+
+FrontendFramework: React
 
 Authentication: Auth0 React SDK
 
@@ -29,6 +30,7 @@ Styling: CSS with Custom Properties for theming
 Deployment: Vercel
 
 Backend
+
 Framework: Python with FastAPI
 
 AI: Hugging Face Inference API
@@ -40,6 +42,7 @@ Authentication: PyJWT for token validation
 Deployment: Render
 
 Getting Started
+
 Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
 Prerequisites
