@@ -1,0 +1,143 @@
+/* LandingPage.css - Modern Redesign */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
+
+.landing-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #121826;
+  color: #F0F4F9;
+  text-align: center;
+  
+  /* --- FIX: Full Height Background --- */
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* --- Navbar (Glassmorphism Effect) --- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  
+  /* --- NEW: Glass Effect --- */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgba(29, 40, 58, 0.7); /* Semi-transparent */
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(240, 244, 249, 0.1);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.login-button {
+  background-color: transparent;
+  color: #F0F4F9;
+  border: 1px solid #33D1A3;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.login-button:hover {
+  background-color: #33D1A3;
+  color: #121826;
+}
+
+/* --- Hero Section (With Gradient and Animation) --- */
+.hero-section {
+  padding: 6rem 2rem;
+  /* --- NEW: Gradient Background --- */
+  background-image: radial-gradient(circle at 50% 0%, #1D283A, #121826 70%);
+  
+  /* --- NEW: Animation --- */
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-section h1 {
+  font-size: 3.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.hero-section p {
+  font-size: 1.25rem;
+  font-weight: 300;
+  max-width: 650px;
+  margin: 0 auto 2.5rem auto;
+  color: #A0AEC0; /* Lighter text for subtitle */
+}
+
+.cta-button {
+  background-color: #33D1A3;
+  color: #121826;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(51, 209, 163, 0.2);
+}
+
+/* --- Features Section --- */
+.features-section {
+  padding: 5rem 2rem;
+  background-color: #121826;
+}
+
+.features-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background-color: #1D283A;
+  padding: 2.5rem;
+  border-radius: 12px;
+  width: 320px;
+  border: 1px solid rgba(240, 244, 249, 0.1);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    border-color: #33D1A3;
+}
+
+.feature-card h3 {
+  color: #33D1A3;
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.feature-card p {
+  color: #A0AEC0;
+  line-height: 1.6;
+}

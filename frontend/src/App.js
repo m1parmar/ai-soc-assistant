@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import ChatBot from "./ChatBot";
+import LandingPage from "./LandingPage"; // Import the new component
 import "./App.css";
 
 function App() {
@@ -16,7 +17,6 @@ function App() {
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    // This line sets the data-theme attribute on the <html> tag
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
@@ -25,16 +25,16 @@ function App() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>; // You can create a more elaborate loading screen here
   }
 
   return (
     <div className="app-container">
       {!isAuthenticated ? (
-        <div className="login-container">
-          <button onClick={() => loginWithRedirect()}>Login</button>
-        </div>
+        // Show the LandingPage if the user is not logged in
+        <LandingPage login={loginWithRedirect} />
       ) : (
+        // Show the ChatBot if the user is logged in
         <ChatBot 
           getToken={getAccessTokenSilently} 
           user={user} 
