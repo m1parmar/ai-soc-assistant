@@ -1,5 +1,6 @@
-# app.py (Corrected Final Version)
+# app.py (Final Version with Enhanced Logic)
 import os
+import re # Import the regular expressions module
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -33,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 5. Auth0 JWT validation (Corrected and Secure)
+# 5. Auth0 JWT validation (Secure)
 def verify_jwt(request: Request):
     token = request.headers.get("x-token")
     if not token:
@@ -74,7 +75,7 @@ def verify_jwt(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
-# 6. VirusTotal lookup (Unchanged)
+# 6. VirusTotal lookup
 def get_ip_reputation(ip: str) -> str:
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip}"
     headers = {"x-apikey": VT_API_KEY}
@@ -89,7 +90,7 @@ def get_ip_reputation(ip: str) -> str:
     except Exception as e:
         return f"Error looking up IP: {e}"
 
-# 7. Hugging Face stream generator (Unchanged)
+# 7. Hugging Face stream generator
 async def ask_llm_stream(prompt: str):
     try:
         for token in client.chat_completion(
@@ -106,64 +107,57 @@ async def ask_llm_stream(prompt: str):
         print(f"LLM Error: {e}")
         yield "Sorry, there was an error with the AI model."
 
-# 8. Main logic for streaming endpoint (Unchanged)
+# 8. Main logic for streaming endpoint (UPGRADED)
 def soc_assistant_stream_logic(query: str):
     clean_query = query.strip().lower()
-    greetings = ["hi", "hello", "hey", "yo", "greetings"]
-    if clean_query in greetings:
+    
+    cve_pattern = re.compile(r'cve-\d{4}-\d{4,}', re.IGNORECASE)
+    malware_keywords = ['ransomware', 'trojan', 'spyware', 'adware', 'worm', 'rootkit', 'keylogger', 'botnet', 'emotet', 'wannacry', 'ryuk']
+
+    if clean_query in ["hi", "hello", "hey", "yo", "greetings"]:
         async def greeting_generator():
-            yield "Hello! How can I help you with a security query today?"
+            yield "Hello! I am Cybrarian, your SOC Assistant. How can I help?"
         return greeting_generator()
+
+    cve_match = cve_pattern.search(query)
+    if cve_match:
+        cve_id = cve_match.group(0).upper()
+        prompt = f"""
+        As a senior SOC Analyst, provide a detailed summary of the vulnerability {cve_id}.
+        Use Markdown formatting. Include the following sections:
+        - **CVSS Score & Severity**:
+        - **Summary of Vulnerability**:
+        - **Impact**:
+        - **Affected Software**:
+        - **Mitigation/Remediation Steps**:
+        """
+        return ask_llm_stream(prompt)
+
     if query.replace(".", "").isdigit():
         vt_summary = get_ip_reputation(query)
         prompt = f"""
-    You are acting as a SOC Analyst. Investigate and interpret the following IP address: **{query}**.  
-
-    Provide your analysis in a structured report format with the following sections:  
-
-    ## 1. Basic Information  
-    - IP Address: {query}  
-    - Type: (Public / Private / Reserved / Loopback)  
-    - Geolocation (Country, City, ISP, ASN, Organization)  
-    - Associated domains (if available)  
-
-    ## 2. Threat Intelligence Sources  
-    - VirusTotal Summary: {vt_summary}  
-    - Check AbuseIPDB or similar databases for abuse reports.  
-    - Mention whether the IP has been seen in:  
-    - Spam campaigns  
-    - Botnet activity  
-    - C2 infrastructure  
-    - Scanning activity  
-
-    ## 3. General Security Context  
-    - Is the IP in a known hosting provider, cloud service (AWS, Azure, GCP), or residential ISP?  
-    - Could this be a proxy / VPN / TOR exit node?  
-    - Any indicators it is a false positive (e.g., shared hosting)?  
-
-    ## 4. Potential Impact & Risk  
-    - How might this IP interact with an enterprise network? (e.g., inbound scanning, phishing delivery, C2 callbacks)  
-    - Risk classification: (Low / Medium / High)  
-    - Confidence level: (Low / Medium / High)  
-
-    ## 5. Recommended Actions  
-    - Block/allow recommendations (firewall / IDS / EDR).  
-    - Monitor for further activity (alerts, logs).  
-    - Suggest enrichment steps (reverse DNS, WHOIS lookup, passive DNS).  
-    """
+        As a SOC Analyst, interpret the following VirusTotal result for the IP address {query}.
+        Use Markdown formatting. Include a title, key findings in a bulleted list, and a concluding summary.
+        VirusTotal Result: "{vt_summary}"
+        """
         return ask_llm_stream(prompt)
 
-    # fallback if not an IP
-    prompt = f"""
-    As a helpful SOC Analyst assistant, provide a concise insight about the topic.  
-    Use Markdown formatting.  
+    for keyword in malware_keywords:
+        if keyword in clean_query:
+            prompt = f"""
+            As a senior SOC Analyst, explain the malware type: '{keyword.title()}'.
+            Use Markdown formatting. Describe its typical behavior, common infection vectors, and key indicators of compromise (IoCs).
+            """
+            return ask_llm_stream(prompt)
 
-    **Topic:** {query}
+    prompt = f"""
+    As a helpful SOC Analyst assistant, provide a concise insight about the following topic.
+    Use Markdown formatting to structure your response with a clear title and key details.
+    Topic: "{query}"
     """
     return ask_llm_stream(prompt)
 
-
-# 9. API Routes (Unchanged)
+# 9. API Routes
 @app.post("/stream")
 async def stream(request: Request, payload: dict = Depends(verify_jwt)):
     body = await request.json()
