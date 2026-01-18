@@ -25,7 +25,14 @@ function App() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // You can create a more elaborate loading screen here
+    return (
+      <div className="app-container">
+        <div className="loading-screen" role="status" aria-label="Loading application">
+          <div className="loading-spinner" aria-hidden="true"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

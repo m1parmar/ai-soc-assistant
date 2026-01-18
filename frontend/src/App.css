@@ -11,6 +11,8 @@
   --accent-color-hover: #1765cc;
   --user-bubble-background: #d1e7ff;
   --bot-bubble-background: #f0f4f9;
+  --focus-ring-color: #1a73e8;
+  color-scheme: light;
 }
 
 [data-theme='dark'] {
@@ -23,6 +25,8 @@
   --accent-color-hover: #a5c6f9;
   --user-bubble-background: #283545;
   --bot-bubble-background: #3c4043;
+  --focus-ring-color: #8ab4f8;
+  color-scheme: dark;
 }
 
 html, body, #root {
@@ -48,4 +52,38 @@ html, body, #root {
   justify-content: center;
   align-items: center;
   height: 100%;
+}
+
+/* Loading screen styles */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+    border-top-color: var(--accent-color);
+    border-right-color: var(--accent-color);
+  }
 }

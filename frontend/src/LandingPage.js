@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import './LandingPage.css';
 
 // The login function is passed down as a prop from App.js
 function LandingPage({ login }) {
+  const handleLogin = useCallback(() => {
+    login();
+  }, [login]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      login();
+    }
+  }, [login]);
+
   return (
     <div className="landing-page">
-      <nav className="navbar">
-        <div className="navbar-brand">Cybrarian</div>
-        <button className="login-button" onClick={login}>
+      <nav className="navbar" role="navigation" aria-label="Main navigation">
+        <div className="navbar-brand" role="banner">Cybrarian</div>
+        <button
+          className="login-button"
+          onClick={handleLogin}
+          type="button"
+          aria-label="Log in to Cybrarian"
+        >
           Login
         </button>
       </nav>
@@ -18,38 +34,44 @@ function LandingPage({ login }) {
           Cybrarian integrates with leading security tools to provide instant
           threat intelligence, right when you need it.
         </p>
-        <button className="cta-button" onClick={login}>
+        <button
+          className="cta-button"
+          onClick={handleLogin}
+          type="button"
+          aria-label="Get started with Cybrarian"
+        >
           Get Started
         </button>
-        
       </header>
 
-      <section className="features-section">
-        <h2>Features</h2>
-        <div className="features-grid">
-          <div className="feature-card">
-            <h3>Instant IP Analysis</h3>
-            <p>
-              Leverage real-time data from VirusTotal to assess the reputation of
-              any IP address in seconds.
-            </p>
+      <main>
+        <section className="features-section" aria-labelledby="features-heading">
+          <h2 id="features-heading">Features</h2>
+          <div className="features-grid" role="list">
+            <article className="feature-card" role="listitem">
+              <h3>Instant IP Analysis</h3>
+              <p>
+                Leverage real-time data from VirusTotal to assess the reputation of
+                any IP address in seconds.
+              </p>
+            </article>
+            <article className="feature-card" role="listitem">
+              <h3>AI-Powered Insights</h3>
+              <p>
+                Go beyond raw data. Our AI provides clear, human-readable
+                analysis and recommendations for security events.
+              </p>
+            </article>
+            <article className="feature-card" role="listitem">
+              <h3>Secure and Authenticated</h3>
+              <p>
+                Built with Auth0 to ensure that only authorized personnel can
+                access sensitive security information.
+              </p>
+            </article>
           </div>
-          <div className="feature-card">
-            <h3>AI-Powered Insights</h3>
-            <p>
-              Go beyond raw data. Our AI provides clear, human-readable
-              analysis and recommendations for security events.
-            </p>
-          </div>
-          <div className="feature-card">
-            <h3>Secure and Authenticated</h3>
-            <p>
-              Built with Auth0 to ensure that only authorized personnel can
-              access sensitive security information.
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 }

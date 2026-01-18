@@ -1,4 +1,18 @@
 /* ChatBot.css - Final Version */
+
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .chatbot-container {
   display: flex;
   flex-direction: column;
@@ -194,4 +208,86 @@
 }
 .stop-button:hover {
   border-color: var(--text-primary);
+}
+
+/* Focus-visible styles for keyboard accessibility */
+.chatbot-header button:focus-visible,
+.input-area button:focus-visible,
+.stop-button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.input-area textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-color);
+  border-radius: 4px;
+}
+
+/* Ensure buttons have proper hover states */
+.input-area button:not(:disabled):hover {
+  background-color: var(--accent-color-hover);
+  transform: scale(1.05);
+}
+
+/* Touch optimization */
+.chatbot-header button,
+.input-area button,
+.stop-button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .chatbot-container,
+  .chatbot-header,
+  .chatbot-header button,
+  .message .bubble,
+  .input-area-wrapper,
+  .input-area,
+  .input-area button,
+  .stop-button-wrapper {
+    transition: none;
+  }
+
+  .message {
+    animation: none;
+  }
+
+  @keyframes slideUpFadeIn {
+    from { opacity: 1; transform: none; }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: none; }
+    40% { transform: none; }
+  }
+
+  .typing-indicator span {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .typing-indicator span:nth-of-type(2) {
+    opacity: 0.8;
+  }
+
+  .typing-indicator span:nth-of-type(3) {
+    opacity: 1;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .chatbot-header button,
+  .input-area button,
+  .stop-button {
+    border: 2px solid currentColor;
+  }
+
+  .message .bubble {
+    border: 1px solid var(--text-primary);
+  }
 }
