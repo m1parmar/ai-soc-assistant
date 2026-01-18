@@ -1,26 +1,33 @@
 # app.py (Final Version with Enhanced Logic)
 import os
 import re # Import the regular expressions module
+import json
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import requests
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
+# from huggingface_hub import InferenceClient  # Commented out - using OpenRouter instead
 import jwt
 from jwt.algorithms import RSAAlgorithm
 import asyncio
+import httpx  # For async HTTP requests to OpenRouter
 
 # 1. Load Environment Variables Correctly
 load_dotenv()
 VT_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
-HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
+# HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  # Commented out - using OpenRouter instead
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_KEY")
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
 API_AUDIENCE = os.getenv("AUTH0_AUDIENCE")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# 2. Hugging Face client
-client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_API_KEY)
+# 2. OpenRouter configuration
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_MODEL = "xiaomi/mimo-v2-flash:free"
+
+# Old HuggingFace client - commented out for later use
+# client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_API_KEY)
 
 # 3. FastAPI app
 app = FastAPI()
@@ -90,22 +97,63 @@ def get_ip_reputation(ip: str) -> str:
     except Exception as e:
         return f"Error looking up IP: {e}"
 
-# 7. Hugging Face stream generator
+# 7. OpenRouter stream generator
 async def ask_llm_stream(prompt: str):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": FRONTEND_URL,
+        "X-Title": "Cybrarian SOC Assistant"
+    }
+
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1024,
+        "stream": True
+    }
+
     try:
-        for token in client.chat_completion(
-            model="mistralai/Mistral-7B-Instruct-v0.2",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1024,
-            stream=True,
-        ):
-            content = token.choices[0].delta.get("content")
-            if content:
-                yield content
-                await asyncio.sleep(0.01)
+        async with httpx.AsyncClient(timeout=60.0) as http_client:
+            async with http_client.stream("POST", OPENROUTER_BASE_URL, headers=headers, json=payload) as response:
+                if response.status_code != 200:
+                    error_text = await response.aread()
+                    print(f"OpenRouter Error: {response.status_code} - {error_text}")
+                    yield "Sorry, there was an error with the AI model."
+                    return
+
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]  # Remove "data: " prefix
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                            content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            if content:
+                                yield content
+                        except json.JSONDecodeError:
+                            continue
     except Exception as e:
         print(f"LLM Error: {e}")
         yield "Sorry, there was an error with the AI model."
+
+# Old HuggingFace stream generator - commented out for later use
+# async def ask_llm_stream_huggingface(prompt: str):
+#     try:
+#         for token in client.chat_completion(
+#             model="mistralai/Mistral-7B-Instruct-v0.2",
+#             messages=[{"role": "user", "content": prompt}],
+#             max_tokens=1024,
+#             stream=True,
+#         ):
+#             content = token.choices[0].delta.get("content")
+#             if content:
+#                 yield content
+#                 await asyncio.sleep(0.01)
+#     except Exception as e:
+#         print(f"LLM Error: {e}")
+#         yield "Sorry, there was an error with the AI model."
 
 # 8. Main logic for streaming endpoint (UPGRADED)
 def soc_assistant_stream_logic(query: str):

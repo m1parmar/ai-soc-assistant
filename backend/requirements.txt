@@ -6,3 +6,4 @@ huggingface_hub
 PyJWT==2.3.0
 cryptography==36.0.1
 asyncio
+httpx
